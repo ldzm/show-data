@@ -9,15 +9,20 @@
 	<constant name="struts.devMode" value="true" />
 
 	<package name="lee" extends="json-default">
-		<default-action-ref name="index" />
-		<action name="jsonExample" class="example.JSONExample">
+		<action name="home" class="option.IndexAction">
+			<result>/WEB-INF/home.jsp</result>
+		</action>
+		<action name="optionAction" class="option.OptionAction">
 			<result type="json">
 				<param name="noCache">true</param>
 				<param name="excludeNullProperties">true</param>
 			</result>
 		</action>
-		<action name="*">
-			<result>/WEB-INF/HelloWorld.jsp</result>
+		<action name="analysis" class="option.AnalysisForwordAction">
+			<result>/WEB-INF/analysis.jsp</result>
+		</action>
+		<action name="analysisAction" class="option.AnalysisAction">
+			<result>/WEB-INF/analysis.jsp</result>
 		</action>
 	</package>
 

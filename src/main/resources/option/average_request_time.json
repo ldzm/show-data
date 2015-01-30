@@ -1,6 +1,6 @@
 {
     title : {
-        text: '请求平均相应时间',
+        text: 'HTTP 请求统计',
         subtext: 'RT'
     },
     tooltip : {
@@ -31,7 +31,7 @@
         {
             type : 'value',
             axisLabel : {
-                formatter: '{value} °C'
+                formatter: '{value} ms'
             }
         }
     ],

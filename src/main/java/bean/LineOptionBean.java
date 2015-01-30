@@ -4,18 +4,26 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-public class AverageRequestTimeBean {
+public class LineOptionBean {
 
+	private TitleBean title;
 	private List<String> legend;
 	private List<String> xAxis;
 	private List<SeriesBean> series;
 	
-	public AverageRequestTimeBean() {
+	public LineOptionBean() {
+		title = new TitleBean();
 		legend = Lists.newArrayList();
 		xAxis = Lists.newArrayList();
 		series = Lists.newArrayList();
 	}
 	
+	public TitleBean getTitle() {
+		return title;
+	}
+	public void setTitle(TitleBean title) {
+		this.title = title;
+	}
 	public void addLegend(String value) {
 		legend.add(value);
 	}
@@ -46,7 +54,7 @@ public class AverageRequestTimeBean {
 
 	@Override
 	public String toString() {
-		return "AverageRequestTimeBean [legend=" + legend + ", xAxis=" + xAxis
-				+ ", series=" + series + "]";
+		return "LineOptionBean [title=" + title + ", legend=" + legend + ", xAxis=" + xAxis + ", series=" + series
+				+ "]";
 	}
 }

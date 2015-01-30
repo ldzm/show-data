@@ -7,7 +7,7 @@ import com.google.common.collect.Lists;
 public class SeriesBean {
 
 	private String name;
-	private List<Integer> data;
+	private List<Float> data;
 
 	public SeriesBean() {
 		data = Lists.newArrayList();
@@ -26,15 +26,15 @@ public class SeriesBean {
 		this.name = name;
 	}
 
-	public List<Integer> getData() {
+	public List<Float> getData() {
 		return data;
 	}
 
-	public void setData(List<Integer> data) {
+	public void setData(List<Float> data) {
 		this.data = data;
 	}
 
-	public void add(Integer value) {
+	public void add(Float value) {
 		data.add(value);
 	}
 
@@ -43,9 +43,9 @@ public class SeriesBean {
 		return "SeriesBean [name=" + name + ", data=" + data + "]";
 	}
 	
-	public static void main(String[] args) {
-		SeriesBean seriesBean = new SeriesBean();
-		
-		seriesBean.add(new Integer(0));
-	}
+//	public static void main(String[] args) {
+//		SeriesBean seriesBean = new SeriesBean();
+//		
+//		seriesBean.add(new Float(0));
+//	}
 }
