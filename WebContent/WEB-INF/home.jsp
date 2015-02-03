@@ -36,6 +36,31 @@
 			});
 		});
 	}
+
+	function verify() {
+		if (document.responseTime.basedir.value.trim().length == 0) {
+			alert("文件所在HDFS不能为空！");
+			document.responseTime.basedir.focus();
+			return false;
+		}
+		if (document.responseTime.filedir.value.trim().length == 0) {
+			alert("文件相对HDFS路径不能为空！");
+			document.responseTime.filedir.focus();
+			return false;
+		}
+		if (document.responseTime.interval.value.trim().length == 0) {
+			alert("时间间隔不能为空！");
+			document.responseTime.interval.focus();
+			return false;
+		}
+		for (i = 0; i < document.responseTime.interval.value.trim().length; i++) {
+			if (name.charAt(i) < "0" || name.charAt(i) > "9"){
+				alert("请输入数字！");
+				document.responseTime.interval.focus();
+				return false;
+			}
+		}
+	}
 </script>
 <style type="text/css">
 label[for="requestType"] {
@@ -80,7 +105,7 @@ label[for="basedir"] {
 
 		<!-- Main component for a primary marketing message or call to action -->
 		<div class="jumbotron">
-			<s:form id="responseTime" method="post">
+			<s:form id="responseTime" name="responseTime" method="post" >
 				<s:select id="requestType" name="requestType" label="请选择请求类型"
 					list="requestTypeMap" listKey="key" listValue="value"
 					value="HTTP Request">
@@ -90,10 +115,11 @@ label[for="basedir"] {
 					value="true">
 				</s:select>
 				<s:textfield id="basedir" label="文件所在HDFS" name="basedir"
-					value="hdfs://cp01-rdqa-dev362.cp01.baidu.com:9000" />
+					value="hdfs://sky:9000" />
 				<s:textfield id="filedir" label="文件相对HDFS路径" name="filedir"
 					value="/art/output/part-00000" />
 				<s:textfield id="interval" label="时间间隔" name="interval" value="10" />
+				<s:fielderror/>
 				<tr>
 					<td><input type="button" value="提交" onClick="getLineOption();" />
 					</td>

@@ -1,6 +1,7 @@
 package option;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 
 import service.HDFSService;
@@ -48,6 +49,15 @@ public class AnalysisAction extends ActionSupport {
 	@Override
 	public String execute() {
 
+		if (StringUtils.isBlank(basedir)) {
+			this.addActionError("文件所在HDFS输入不能为空！");
+			
+			return Action.ERROR;
+		}
+		if (StringUtils.isBlank(filedir)) {
+			this.addActionError("文件相对HDFS路径不能为空！");
+			return Action.ERROR;
+		}
 		hdfsService.setBasePath(basedir);
 		List<String> linesContent = null;
 		try {

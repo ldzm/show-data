@@ -151,8 +151,22 @@ public class HDFSService {
 		return lineContents;
 	}
 	
-//	public static void main(String[] args) throws Exception {
-//		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
-//		hdfsService.downloadFileFromHDFS(new Path("/art/output/part-00000"), new File("/home/sky/Desktop"));
-//	}
+	public boolean isDirEmpty(String dir) throws Exception {
+		Configuration config = new Configuration();
+		FileSystem.setDefaultUri(config, new URI(basePath));
+		FileSystem fs = FileSystem.get(config);
+		FileStatus[] stats = fs.listStatus(new Path(basePath, dir));
+		
+		fs.close();
+		
+		if (stats.length == 0) {
+			return true;
+		}
+		
+		return false;
+	}
+	public static void main(String[] args) throws Exception {
+		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
+		System.out.println(hdfsService.isDirEmpty("/axt"));
+	}
 }

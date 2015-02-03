@@ -2,6 +2,7 @@ package option;
 import java.io.File;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 
 import net.sf.json.JSON;
@@ -19,12 +20,11 @@ import com.opensymphony.xwork2.ActionSupport;
 public class OptionAction extends ActionSupport {
 
 	private static final long serialVersionUID = 1L;
-	
-	private Integer interval;
-	private Boolean success;
 	private String requestType;
+	private Boolean success;
 	private String basedir;
 	private String filedir;
+	private Integer interval;
 	private JSON option;
 	private OptionService optionService;
 	private ParserFileService parserFileService;	
@@ -74,7 +74,19 @@ public class OptionAction extends ActionSupport {
 
 	@Override
 	public String execute() {
-		
+
+		if (StringUtils.isBlank(basedir)) {
+			this.addFieldError(basedir, "文件所在HDFS输入不能为空！");
+			return Action.ERROR;
+		}
+		if (StringUtils.isBlank(filedir)) {
+			this.addFieldError("filedir", "文件相对HDFS路径不能为空！");
+			return Action.ERROR;
+		}
+		if (interval < 1) {
+			this.addFieldError("interval", "时间间隔必须大于0！");
+			return Action.ERROR;
+		}
 		String filepath = OptionAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
 		option = optionService.getAverageRequestTimeOptionAsJSON(new File(filepath));
 	

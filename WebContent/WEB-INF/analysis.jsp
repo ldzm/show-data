@@ -104,9 +104,10 @@ label[for="basedir"] {
 		<div class="jumbotron">
 			<s:form id="analysisSummery" action="analysisAction" method="post">
 				<s:textfield id="basedir" label="文件所在HDFS" name="basedir"
-					value="hdfs://cp01-rdqa-dev362.cp01.baidu.com:9000" />
+					value="hdfs://sky:9000" />
 				<s:textfield id="filedir" label="文件相对HDFS路径" name="filedir"
-					value="/art/output/part-00001" />
+					value="/art/output2/part-00000" />
+				<s:actionerror/>
 				<s:submit value="刷新" align="left" />
 			</s:form>
 			<table class="altrowstable" id="alternatecolor">
