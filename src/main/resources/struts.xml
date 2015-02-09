@@ -12,7 +12,7 @@
 		<action name="home" class="option.IndexAction">
 			<result>/WEB-INF/home.jsp</result>
 		</action>
-		<action name="optionAction" class="option.OptionAction">
+		<action name="optionAction" class="option.AverageResponseTimeAction">
 			<result type="json">
 				<param name="noCache">true</param>
 				<param name="excludeNullProperties">true</param>

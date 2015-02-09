@@ -2,35 +2,40 @@ package option;
 import java.io.File;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.fs.Path;
-
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.fs.Path;
+
 import service.HDFSService;
 import service.OptionService;
 import service.ParserFileService;
 import bean.LineOptionBean;
 
+import com.google.common.collect.Lists;
 import com.opensymphony.xwork2.Action;
 import com.opensymphony.xwork2.ActionSupport;
 
-
-public class OptionAction extends ActionSupport {
+public class AverageResponseTimeAction extends ActionSupport {
 
 	private static final long serialVersionUID = 1L;
 	private String requestType;
 	private Boolean success;
 	private String basedir;
-	private String filedir;
+	private String hadoopcmd;
+	private String taskdir;
+	private String namelist;
+	private String inputfiledir;
+	private String outputfiledir;
 	private Integer interval;
 	private JSON option;
 	private OptionService optionService;
 	private ParserFileService parserFileService;	
     private HDFSService hdfsService;
 	
-    public OptionAction() {
+    public AverageResponseTimeAction() {
 		optionService = new OptionService();
 		parserFileService = new ParserFileService();
 		hdfsService = new HDFSService();
@@ -59,11 +64,35 @@ public class OptionAction extends ActionSupport {
 	public void setBasedir(String basedir) {
 		this.basedir = basedir;
 	}
-	public String getFiledir() {
-		return filedir;
+	public String getHadoopcmd() {
+		return hadoopcmd;
 	}
-	public void setFiledir(String filedir) {
-		this.filedir = filedir;
+	public void setHadoopcmd(String hadoopcmd) {
+		this.hadoopcmd = hadoopcmd;
+	}
+	public String getTaskdir() {
+		return taskdir;
+	}
+	public void setTaskdir(String taskdir) {
+		this.taskdir = taskdir;
+	}
+	public String getNamelist() {
+		return namelist;
+	}
+	public void setNamelist(String namelist) {
+		this.namelist = namelist;
+	}
+	public String getInputfiledir() {
+		return inputfiledir;
+	}
+	public void setInputfiledir(String inputfiledir) {
+		this.inputfiledir = inputfiledir;
+	}
+	public String getOutputfiledir() {
+		return outputfiledir;
+	}
+	public void setOutputfiledir(String outputfiledir) {
+		this.outputfiledir = outputfiledir;
 	}
 	public JSON getOption() {
 		return option;
@@ -79,7 +108,7 @@ public class OptionAction extends ActionSupport {
 			this.addFieldError(basedir, "文件所在HDFS输入不能为空！");
 			return Action.ERROR;
 		}
-		if (StringUtils.isBlank(filedir)) {
+		if (StringUtils.isBlank(inputfiledir)) {
 			this.addFieldError("filedir", "文件相对HDFS路径不能为空！");
 			return Action.ERROR;
 		}
@@ -87,20 +116,37 @@ public class OptionAction extends ActionSupport {
 			this.addFieldError("interval", "时间间隔必须大于0！");
 			return Action.ERROR;
 		}
-		String filepath = OptionAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
+		String filepath = AverageResponseTimeAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
 		option = optionService.getAverageRequestTimeOptionAsJSON(new File(filepath));
 	
-		hdfsService.setBasePath(basedir);
-		List<String> linesContent = null;
-		try {
-			linesContent = hdfsService.getLineContents(new Path(filedir));
-		} catch (Exception e) {
-			e.printStackTrace();
+		// 如果输入的目录存在则删除
+		Path path = new Path(getOutputfiledir());
+		String fileRootPath = path.getParent().toString();
+		String directoryName = path.getName();
+		hdfsService.setBasePath(getBasedir());
+		hdfsService.deleteDirectory(fileRootPath, directoryName);
+		
+		List<String> args = Lists.newArrayList();
+		args.add("-l");
+		args.add(getNamelist());
+		args.add("-i");
+		args.add(getInterval().toString());
+		boolean exeSucc = false;
+		if (!hdfsService.isDirEmpty(getInputfiledir())) {
+		    // 执行hadoop任务
+			exeSucc = hdfsService.startMapReduce(getHadoopcmd(), getTaskdir(), getBasedir() + getInputfiledir(), getBasedir() + getOutputfiledir(), args);
 		}
-		Integer divisor = parserFileService.getDivisor(linesContent, requestType, success);
+		
+		if (!exeSucc) {
+			return Action.ERROR;
+		}
+
+		List<String> linesContent = hdfsService.getLineContents(new Path(getOutputfiledir() + "/part-00000"));
+
+		Integer divisor = parserFileService.getDivisor(linesContent, getRequestType(), getSuccess());
 		
 		System.out.println(divisor);
-		LineOptionBean bean = parserFileService.getLineOptionBean(linesContent, requestType, success, interval, divisor);
+		LineOptionBean bean = parserFileService.getLineOptionBean(linesContent, getRequestType(), getSuccess(), getInterval(), divisor);
 		
 		JSONObject jsonObject = (JSONObject)option;
 		
@@ -143,6 +189,7 @@ public class OptionAction extends ActionSupport {
 		
 		option = jsonObject;
 		
+		System.out.println(option.toString());
 		return Action.SUCCESS;
 	}
 }

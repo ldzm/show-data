@@ -71,12 +71,22 @@ table.altrowstable td {
 .evenrowcolor {
 	background-color: #c3dde0;
 }
-
-label[for="filedir"] {
+label[for="inputfiledir"] {
 	color: black;
 }
-
 label[for="basedir"] {
+	color: black;
+}
+label[for="taskdir"] {
+	color: black;
+}
+label[for="outputfiledir"] {
+	color: black;
+}
+label[for="hadoopcmd"] {
+	color: black;
+}
+label[for="namelist"] {
 	color: black;
 }
 </style>
@@ -105,8 +115,16 @@ label[for="basedir"] {
 			<s:form id="analysisSummery" action="analysisAction" method="post">
 				<s:textfield id="basedir" label="文件所在HDFS" name="basedir"
 					value="hdfs://sky:9000" />
-				<s:textfield id="filedir" label="文件相对HDFS路径" name="filedir"
-					value="/art/output2/part-00000" />
+				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd" size="30"
+					value="/home/sky/local/program/hadoop-0.19.0/bin/hadoop" />
+				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir" size="30"
+					value="/home/sky/Desktop/pt/average_response_time.jar" />
+				<s:textarea id="namelist" label="文件头" name="namelist" cols="30" rows="3"
+					value="timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,bytes,grpThreads,allThreads,Latency" />
+				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径" name="inputfiledir" size="30"
+					value="/art/input" />
+				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径" name="outputfiledir" size="30"
+					value="/art/output" />
 				<s:actionerror/>
 				<s:submit value="刷新" align="left" />
 			</s:form>

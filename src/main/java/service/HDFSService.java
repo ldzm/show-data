@@ -3,9 +3,12 @@ package service;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -22,36 +25,52 @@ public class HDFSService {
 
 	private final String ENCODING = "UTF-8";
 	private String basePath;
-	
+
 	public HDFSService() {
 		basePath = "";
 	}
+
 	public HDFSService(String basePath) {
 		this.basePath = basePath;
 	}
-	
+
 	public String getBasePath() {
 		return basePath;
 	}
+
 	public void setBasePath(String basePath) {
 		this.basePath = basePath;
 	}
-	
-	public void uploadLocalFileToHDFS(File localFile, Path destPath) throws Exception {
+
+	public void uploadLocalFileToHDFS(File localFile, Path destPath) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem hdfs = FileSystem.get(config);
-		// Path dst = new Path(fileRootPath,destPath);
-		// hdfs.copyFromLocalFile(src, dst);
-		FSDataOutputStream out = hdfs.create(destPath, new Progressable() {
-			@Override
-			public void progress() {
-				System.out.println("文件进度");
+		FileSystem hdfs = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			hdfs = FileSystem.get(config);
+			// Path dst = new Path(fileRootPath,destPath);
+			// hdfs.copyFromLocalFile(src, dst);
+			FSDataOutputStream out = hdfs.create(destPath, new Progressable() {
+				@Override
+				public void progress() {
+					System.out.println("文件进度");
+				}
+			});
+			InputStream in = new BufferedInputStream(new FileInputStream(localFile));
+			IOUtils.copy(in, out);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				hdfs.close();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		});
-		InputStream in = new BufferedInputStream(new FileInputStream(localFile));
-		IOUtils.copy(in, out);
-		hdfs.close();
+		}
 	}
 
 	/**
@@ -61,19 +80,52 @@ public class HDFSService {
 	 * @param localDir
 	 * @throws Exception
 	 */
-	public void downloadFileFromHDFS(Path destPath, File localDir) throws Exception {
+	public void downloadFileFromHDFS(Path destPath, File localDir) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem hdfs = FileSystem.get(config);
-		if (hdfs.exists(destPath)) {
-			FSDataInputStream in = hdfs.open(destPath);
-			FileStatus stat = hdfs.getFileStatus(destPath);
-			byte[] buffer = new byte[Integer.parseInt(String.valueOf(stat.getLen()))];
-			in.readFully(0, buffer);
-			in.close();
-			hdfs.close();
+		FileSystem hdfs = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			hdfs = FileSystem.get(config);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	
+		boolean flag = false;
+		try {
+			flag = hdfs.exists(destPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		FSDataInputStream in = null; 
+		byte[] buffer = null;
+		if (flag) {
+			try {
+				in = hdfs.open(destPath);
+				FileStatus stat = hdfs.getFileStatus(destPath);
+				buffer = new byte[Integer.parseInt(String.valueOf(stat.getLen()))];
+				in.readFully(0, buffer);
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					in.close();
+					hdfs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 
-			IOUtils.write(buffer, new FileOutputStream(localDir + "/" + destPath.getName()));
+			try {
+				IOUtils.write(buffer, new FileOutputStream(localDir + "/" + destPath.getName()));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -83,90 +135,172 @@ public class HDFSService {
 	 * @param destPath
 	 * @throws Exception
 	 */
-	public boolean deleteFile(Path destPath) throws Exception {
+	public boolean deleteFile(Path destPath) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem hdfs = FileSystem.get(config);
-		if (hdfs.exists(destPath)) {
-			return hdfs.delete(destPath, true);
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			FileSystem hdfs = FileSystem.get(config);
+			if (hdfs.exists(destPath)) {
+				return hdfs.delete(destPath, true);
+			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return false;
 	}
 
-	public void listAll(String dir) throws Exception {
+	public void createDirectory(String fileRootPath, String directoryName) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem fs = FileSystem.get(config);
-		FileStatus[] stats = fs.listStatus(new Path(basePath, dir));
-		for (int i = 0; stats != null && i < stats.length; ++i) {
-			// System.out.println(ToStringBuilder.reflectionToString(stats[i]));
-			if (!stats[i].isDir()) {
-				// regular file
-				System.out.println("文件:" + stats[i].getPath().toString() + "====" + stats[i].getGroup());
-
-			} else if (stats[i].isDir()) {
-				// dir
-				System.out.println("文件夹:" + stats[i].getPath().toString() + "====" + stats[i].getGroup());
+		FileSystem fs = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			fs = FileSystem.get(config);
+			System.out.println(ToStringBuilder.reflectionToString(fs));
+			fs.mkdirs(new Path(fileRootPath, directoryName));
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fs.close();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
-		fs.close();
 	}
 
-	public void createDirectory(String fileRootPath,String directoryName) throws Exception {
+	public void deleteDirectory(String fileRootPath, String directoryName) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem fs = FileSystem.get(config);
-		System.out.println(ToStringBuilder.reflectionToString(fs));
-		fs.mkdirs(new Path(fileRootPath, directoryName));
-		fs.close();
+		FileSystem fs = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			fs = FileSystem.get(config);
+			fs.delete(new Path(fileRootPath, directoryName), true);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fs.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
-	public void deleteDirectory(String fileRootPath,String directoryName) throws Exception {
-		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem fs = FileSystem.get(config);
-		fs.delete(new Path(fileRootPath, directoryName), true);
-		fs.close();
-	}
-	
 	/**
 	 * 文件读取
+	 * 
 	 * @param destPath
 	 * @throws Exception
-	 * @return lineContents 
+	 * @return lineContents
 	 */
-	public List<String> getLineContents(Path destPath) throws Exception {
+	public List<String> getLineContents(Path destPath) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem hdfs = FileSystem.get(config);
-		
-		List<String> lineContents = null;
-		if (hdfs.exists(destPath)) {
-			FSDataInputStream in = hdfs.open(destPath);
-			lineContents = IOUtils.readLines(in, ENCODING);
-			in.close();
-			hdfs.close();
+		FileSystem hdfs = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			hdfs = FileSystem.get(config);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+
+		List<String> lineContents = null;
 		
+		boolean flag = false;
+		try {
+			flag = hdfs.exists(destPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		FSDataInputStream in = null;
+		if (flag) {
+			try {
+				in = hdfs.open(destPath);
+				lineContents = IOUtils.readLines(in, ENCODING);
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					in.close();
+					hdfs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
 		return lineContents;
 	}
-	
-	public boolean isDirEmpty(String dir) throws Exception {
+
+	public boolean isDirEmpty(String dir) {
 		Configuration config = new Configuration();
-		FileSystem.setDefaultUri(config, new URI(basePath));
-		FileSystem fs = FileSystem.get(config);
-		FileStatus[] stats = fs.listStatus(new Path(basePath, dir));
-		
-		fs.close();
-		
+		FileSystem fs = null;
+		FileStatus[] stats = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			fs = FileSystem.get(config);
+			stats = fs.listStatus(new Path(basePath, dir));
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fs.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		if (stats.length == 0) {
 			return true;
 		}
-		
+
 		return false;
 	}
+
+	public boolean startMapReduce(String hadoopCmd, String jobPath, String inputDirPath, String outputDirPath,
+			List<String> args) {
+		String shell = hadoopCmd + " jar " + jobPath + " " + inputDirPath + " " + outputDirPath + " " + toString(args);
+		String[] cmds = { "/bin/bash", "-c", shell };
+
+		try {
+			Process process = Runtime.getRuntime().exec(cmds);
+			int flag = process.waitFor();
+			if (0 == flag) {
+				return true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	public String toString(List<String> args) {
+
+		String result = "";
+		for (int i = 0; i < args.size(); i++) {
+			result += args.get(i) + " ";
+		}
+		return result;
+	}
+
 	public static void main(String[] args) throws Exception {
 		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
-		System.out.println(hdfsService.isDirEmpty("/axt"));
+		hdfsService.deleteDirectory("/", "axt");
+		System.out.println("OK");
+		Path path = new Path("/art/ax/");
+		String fileRootPath = path.getParent().toString();
+		String directoryName = path.getName();
+		System.out.println(fileRootPath);
+		System.out.println(directoryName);
 	}
 }
