@@ -36,7 +36,7 @@
 
 	var initFormData = function() {
 		
-		$.post('dataAction', {actionName:"Average"},function(data) {
+		$.post('dataAction', {actionName:"Analysis"},function(data) {
 			var data = data["data"];
 			document.getElementById("basedir").value=data.basedir;
 			document.getElementById("hadoopcmd").value=data.hadoopcmd;

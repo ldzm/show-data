@@ -1,0 +1,8 @@
+{
+	"basedir":"hdfs://sky:9000",
+	"hadoopcmd":"/home/sky/local/program/hadoop-0.19.0/bin/hadoop",
+	"taskdir":"/home/sky/Desktop/pt/analysis_summery.jar",
+	"namelist":"timeStamp,elapsed,label,responseCode,threadName,dataType,success,bytes,grpThreads,allThreads,Latency",
+	"inputfiledir":"/art/input",
+	"outputfiledir":"/art/output"
+}
