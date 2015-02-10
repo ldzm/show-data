@@ -17,26 +17,44 @@
 
 	var getLineOption = function() {
 		
-		$.post('optionAction', $("#responseTime").serializeArray(), function(data) {
+		$.post('averageResponseTimeAction', $("#responseTime").serializeArray(), function(data) {
 			option = data["option"];
 
-			// 路径配置
-			require.config({
-				paths : {
-					echarts : 'http://echarts.baidu.com/build/dist'
-				}
-			});
-			// 使用
-			require([ 'echarts', 'echarts/chart/line' // 使用line状图就加载line模块，按需加载
-			], function(ec) {
-				// 基于准备好的dom，初始化echarts图表
-				var myChart = ec.init(document.getElementById('main'));
-				// 为echarts对象加载数据 
-				myChart.setOption(option);
-			});
+			if(null != option) {
+				// 路径配置
+				require.config({
+					paths : {
+						echarts : 'http://echarts.baidu.com/build/dist'
+					}
+				});
+				// 使用
+				require([ 'echarts', 'echarts/chart/line' // 使用line状图就加载line模块，按需加载
+				], function(ec) {
+					// 基于准备好的dom，初始化echarts图表
+					var myChart = ec.init(document.getElementById('main'));
+					// 为echarts对象加载数据 
+					myChart.setOption(option);
+				});
+			} else {
+				alert("执行计算平均响应时间的任务失败:(");
+			}
 		});
 	}
-
+	var initFormData = function() {
+		
+		$.post('dataAction', {actionName:"Average"},function(data) {
+			var data = data["data"];
+			document.getElementById("requestType").value=data.requestType;
+			document.getElementById("success").value=data.success;
+			document.getElementById("basedir").value=data.basedir;
+			document.getElementById("hadoopcmd").value=data.hadoopcmd;
+			document.getElementById("taskdir").value=data.taskdir;
+			document.getElementById("namelist").value=data.namelist;
+			document.getElementById("inputfiledir").value=data.inputfiledir;
+			document.getElementById("outputfiledir").value=data.outputfiledir;
+			document.getElementById("interval").value=data.interval;
+		});
+	}
 	function verify() {
 		if (document.responseTime.basedir.value.trim().length == 0) {
 			alert("文件所在HDFS不能为空！");
@@ -60,6 +78,11 @@
 				return false;
 			}
 		}
+	}
+	
+	window.onload = function() {
+	    //初始化表单数据
+		initFormData();
 	}
 </script>
 <style type="text/css">
@@ -115,29 +138,22 @@ label[for="namelist"] {
 		<div class="jumbotron">
 			<s:form id="responseTime" name="responseTime" method="post" >
 				<s:select id="requestType" name="requestType" label="请选择请求类型"
-					list="requestTypeMap" listKey="key" listValue="value"
-					value="HTTP Request">
+					list="requestTypeMap" listKey="key" listValue="value" >
 				</s:select>
 				<s:select id="success" name="success" label="成功/失败"
-					list="#{'true':'成功', 'false':'失败'}" listKey="key" listValue="value"
-					value="true">
+					list="#{'true':'成功', 'false':'失败'}" listKey="key" listValue="value" value="true">
 				</s:select>
-				<s:textfield id="basedir" label="文件所在HDFS" name="basedir" size="30"
-					value="hdfs://sky:9000" />
-				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd" size="30"
-					value="/home/sky/local/program/hadoop-0.19.0/bin/hadoop" />
-				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir" size="30"
-					value="/home/sky/Desktop/pt/average_response_time.jar" />
-				<s:textarea id="namelist" label="文件头" name="namelist" cols="30" rows="3"
-					value="timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,bytes,grpThreads,allThreads,Latency" />
-				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径" name="inputfiledir" size="30"
-					value="/art/input" />
-				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径" name="outputfiledir" size="30"
-					value="/art/output" />
-				<s:textfield id="interval" label="时间间隔" name="interval" value="10"  size="30"/>
-				<s:fielderror/>
+				<s:textfield id="basedir" label="文件所在HDFS" name="basedir" size="30" />
+				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd" size="30" />
+				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir" size="30" />
+				<s:textarea id="namelist" label="文件头" name="namelist" cols="30" rows="3" />
+				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径" name="inputfiledir" size="30" />
+				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径" name="outputfiledir" size="30" />
+				<s:textfield id="interval" label="时间间隔" name="interval" size="30"/>
 				<tr>
 					<td><input type="button" value="提交" onClick="getLineOption();" />
+					</td>
+					<td><input type="button" value="初始化数据 " onClick="initFormData();" />
 					</td>
 				</tr>
 			</s:form>
@@ -147,7 +163,6 @@ label[for="namelist"] {
 		</div>
 	</div>
 	<!-- /container -->
-
 
 	<!-- Bootstrap core JavaScript
     ================================================== -->

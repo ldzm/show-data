@@ -3,12 +3,12 @@ package service;
 import java.io.File;
 
 import net.sf.json.JSON;
-import util.FileUtil;
+import util.JsonUtil;
 
-public class OptionService {
+public class AverageResponseTimeService {
 
 	public JSON getAverageRequestTimeOptionAsJSON(File srcFile) {
 		
-		return FileUtil.readFileToJSON(srcFile);
+		return JsonUtil.readFileToJSON(srcFile);
 	}
 }

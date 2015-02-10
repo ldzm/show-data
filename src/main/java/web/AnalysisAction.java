@@ -1,12 +1,16 @@
-package option;
+package web;
 
+import java.io.File;
 import java.util.List;
+
+import net.sf.json.JSONObject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 
 import service.HDFSService;
 import service.ParserFileService;
+import util.FileUtil;
 import bean.AnalysisResultBean;
 
 import com.google.common.collect.Lists;
@@ -72,6 +76,7 @@ public class AnalysisAction extends ActionSupport {
 		return analysisResultBeans;
 	}
 	public void setAnalysisResultBeans(List<AnalysisResultBean> analysisResultBeans) {
+	
 		this.analysisResultBeans = analysisResultBeans;
 	}
 
@@ -79,7 +84,6 @@ public class AnalysisAction extends ActionSupport {
 	public String execute() {
 		if (StringUtils.isBlank(getBasedir())) {
 			this.addActionError("文件所在HDFS输入不能为空！");
-
 			return Action.ERROR;
 		}
 		if (StringUtils.isBlank(getInputfiledir())) {
@@ -87,10 +91,10 @@ public class AnalysisAction extends ActionSupport {
 			return Action.ERROR;
 		}
 		// 如果输入的目录存在则删除
-		Path path = new Path(getOutputfiledir());
+		Path path = new Path(outputfiledir);
 		String fileRootPath = path.getParent().toString();
 		String directoryName = path.getName();
-		hdfsService.setBasePath(getBasedir());
+		hdfsService.setBasePath(basedir);
 		hdfsService.deleteDirectory(fileRootPath, directoryName);
 
 		List<String> args = Lists.newArrayList();
@@ -99,15 +103,28 @@ public class AnalysisAction extends ActionSupport {
 		boolean exeSucc = false;
 		if (!hdfsService.isDirEmpty(getInputfiledir())) {
 			// 执行hadoop任务
-			exeSucc = hdfsService.startMapReduce(getHadoopcmd(), getTaskdir(), getBasedir() + getInputfiledir(),
-					getBasedir() + getOutputfiledir(), args);
-		}
+			exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir,
+					basedir + outputfiledir, args);
+		} 
 
 		if (!exeSucc) {
+			this.addActionError("执行" + getTaskdir() + "任务失败:(");
 			return Action.ERROR;
+		} else {
+			// 保存表单数据
+			JSONObject json = new JSONObject();
+			json.accumulate("basedir", basedir);
+			json.accumulate("hadoopcmd", hadoopcmd);
+			json.accumulate("taskdir", taskdir);
+			json.accumulate("namelist", namelist);
+			json.accumulate("inputfiledir", inputfiledir);
+			json.accumulate("outputfiledir", outputfiledir);
+
+			String file = AverageResponseTimeAction.class.getClassLoader().getResource("data/analysis.json").getPath();
+			FileUtil.saveFile(new File(file), json.toString(), false);
 		}
 
-		List<String> linesContent = hdfsService.getLineContents(new Path(getOutputfiledir() + "/part-00000"));
+		List<String> linesContent = hdfsService.getLineContents(new Path(outputfiledir + "/part-00000"));
 		analysisResultBeans = parserFileService.getAnalysisResultBeans(linesContent);
 
 		return Action.SUCCESS;

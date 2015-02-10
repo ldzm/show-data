@@ -259,11 +259,40 @@ public class HDFSService {
 			}
 		}
 
-		if (stats.length == 0) {
+		if ((null == stats) || (stats.length == 0)) {
 			return true;
 		}
 
 		return false;
+	}
+	
+	public boolean exist(String file) {
+		Configuration config = new Configuration();
+		FileSystem fs = null;
+		
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			fs = FileSystem.get(config);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		boolean flag = false;
+		try {
+			flag = fs.exists(new Path(file));
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fs.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return flag;
 	}
 
 	public boolean startMapReduce(String hadoopCmd, String jobPath, String inputDirPath, String outputDirPath,
@@ -293,14 +322,29 @@ public class HDFSService {
 		return result;
 	}
 
-	public static void main(String[] args) throws Exception {
-		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
-		hdfsService.deleteDirectory("/", "axt");
-		System.out.println("OK");
-		Path path = new Path("/art/ax/");
-		String fileRootPath = path.getParent().toString();
-		String directoryName = path.getName();
-		System.out.println(fileRootPath);
-		System.out.println(directoryName);
-	}
+//	public static void main(String[] args) throws Exception {
+//		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
+//		hdfsService.deleteDirectory("/", "axt");
+//		hdfsService.createDirectory("/", "axt");
+//		if (hdfsService.exist("/axt")) {
+//			System.out.println("/axt exist");
+//		} else {
+//			System.out.println("/axt not exist");
+//		}
+//		hdfsService.deleteDirectory("/", "axt");
+//		if (hdfsService.exist("/axt")) {
+//			System.out.println("/axt exist");
+//		} else {
+//			System.out.println("/axt not exist");
+//		}
+//		hdfsService.createDirectory("/axt", "axts");
+//		if (hdfsService.exist("/art/output/jmeter-20150209170502.txt")) {
+//			System.out.println("/art/output/jmeter-20150209170502.txt exist");
+//		} else {
+//			System.out.println("/art/output/jmeter-20150209170502.txt not exist");
+//		}
+//		boolean empty = hdfsService.isDirEmpty("/art/output/jmeter-20150209170502.txt exist");
+//		System.out.println(empty);
+//		hdfsService.deleteDirectory("/", "axt");
+//	}
 }

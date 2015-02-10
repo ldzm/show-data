@@ -34,8 +34,24 @@
 				});
 	}
 
+	var initFormData = function() {
+		
+		$.post('dataAction', {actionName:"Average"},function(data) {
+			var data = data["data"];
+			document.getElementById("basedir").value=data.basedir;
+			document.getElementById("hadoopcmd").value=data.hadoopcmd;
+			document.getElementById("taskdir").value=data.taskdir;
+			document.getElementById("namelist").value=data.namelist;
+			document.getElementById("inputfiledir").value=data.inputfiledir;
+			document.getElementById("outputfiledir").value=data.outputfiledir;
+		});
+	}
+	
 	window.onload = function() {
 		altRows('alternatecolor');
+
+	    //初始化表单数据
+		initFormData();
 	}
 </script>
 
@@ -113,20 +129,17 @@ label[for="namelist"] {
 		<!-- Main component for a primary marketing message or call to action -->
 		<div class="jumbotron">
 			<s:form id="analysisSummery" action="analysisAction" method="post">
-				<s:textfield id="basedir" label="文件所在HDFS" name="basedir"
-					value="hdfs://sky:9000" />
-				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd" size="30"
-					value="/home/sky/local/program/hadoop-0.19.0/bin/hadoop" />
-				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir" size="30"
-					value="/home/sky/Desktop/pt/average_response_time.jar" />
-				<s:textarea id="namelist" label="文件头" name="namelist" cols="30" rows="3"
-					value="timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,bytes,grpThreads,allThreads,Latency" />
-				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径" name="inputfiledir" size="30"
-					value="/art/input" />
-				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径" name="outputfiledir" size="30"
-					value="/art/output" />
-				<s:actionerror/>
+				<s:textfield id="basedir" label="文件所在HDFS" name="basedir" />
+				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd" size="30" />
+				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir" size="30" />
+				<s:textarea id="namelist" label="文件头" name="namelist" cols="30" rows="3" />
+				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径" name="inputfiledir" size="30" />
+				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径" name="outputfiledir" size="30" />
 				<s:submit value="刷新" align="left" />
+				<tr>
+					<td><input type="button" value="初始化数据 " onClick="initFormData();" />
+					</td>
+				</tr>
 			</s:form>
 			<table class="altrowstable" id="alternatecolor">
 				<tr>

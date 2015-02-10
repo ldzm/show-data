@@ -9,21 +9,28 @@
 	<constant name="struts.devMode" value="true" />
 
 	<package name="lee" extends="json-default">
-		<action name="home" class="option.IndexAction">
-			<result>/WEB-INF/home.jsp</result>
+		<action name="home" class="web.IndexAction">
+			<result>/WEB-INF/average_request_time.jsp</result>
 		</action>
-		<action name="optionAction" class="option.AverageResponseTimeAction">
+		<action name="averageResponseTimeAction" class="web.AverageResponseTimeAction">
 			<result type="json">
 				<param name="noCache">true</param>
 				<param name="excludeNullProperties">true</param>
 			</result>
 		</action>
-		<action name="analysis" class="option.AnalysisForwordAction">
+		<action name="dataAction" class="web.DataAction">
+			<result type="json">
+				<param name="noCache">true</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+			<result name="error">/WEB-INF/error.jsp</result>
+		</action>
+		<action name="analysis" class="web.AnalysisForwordAction">
 			<result>/WEB-INF/analysis.jsp</result>
 		</action>
-		<action name="analysisAction" class="option.AnalysisAction">
+		<action name="analysisAction" class="web.AnalysisAction">
 			<result>/WEB-INF/analysis.jsp</result>
-			<result name="error">/WEB-INF/analysis.jsp</result> 
+			<result name="error">/WEB-INF/error.jsp</result>
 		</action>
 	</package>
 

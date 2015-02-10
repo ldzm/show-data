@@ -1,7 +1,10 @@
-package option;
+package web;
 
+import java.io.File;
 import java.util.Map;
-import java.util.TreeMap;
+
+import net.sf.json.JSON;
+import util.JsonUtil;
 
 import com.opensymphony.xwork2.ActionSupport;
 
@@ -13,9 +16,6 @@ public class IndexAction extends ActionSupport{
 	private  Map<String, String> requestTypeMap;
 
 	public IndexAction() {
-		requestTypeMap = new TreeMap<String, String>();
-		requestTypeMap.put("HTTP Request", "HTTP 请求");
-		requestTypeMap.put("JAVA Request", "JAVA 请求");
 	}
 
 	public Map<String, String> getRequestTypeMap() {
@@ -27,7 +27,10 @@ public class IndexAction extends ActionSupport{
 
 	@Override
 	public String execute() throws Exception {
-		
+		String filepath = AverageResponseTimeAction.class.getClassLoader().getResource("data/request_type.json").getPath();
+		JSON requestType = JsonUtil.readFileToJSON(new File(filepath));
+		requestTypeMap = JsonUtil.toHashMap(requestType);
+
 		return SUCCESS;
 	}
 }

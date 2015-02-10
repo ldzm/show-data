@@ -1,4 +1,4 @@
-package option;
+package web;
 import java.io.File;
 import java.util.List;
 
@@ -10,8 +10,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 
 import service.HDFSService;
-import service.OptionService;
+import service.AverageResponseTimeService;
 import service.ParserFileService;
+import util.FileUtil;
 import bean.LineOptionBean;
 
 import com.google.common.collect.Lists;
@@ -31,12 +32,12 @@ public class AverageResponseTimeAction extends ActionSupport {
 	private String outputfiledir;
 	private Integer interval;
 	private JSON option;
-	private OptionService optionService;
+	private AverageResponseTimeService optionService;
 	private ParserFileService parserFileService;	
     private HDFSService hdfsService;
 	
     public AverageResponseTimeAction() {
-		optionService = new OptionService();
+		optionService = new AverageResponseTimeService();
 		parserFileService = new ParserFileService();
 		hdfsService = new HDFSService();
     }
@@ -105,25 +106,25 @@ public class AverageResponseTimeAction extends ActionSupport {
 	public String execute() {
 
 		if (StringUtils.isBlank(basedir)) {
-			this.addFieldError(basedir, "文件所在HDFS输入不能为空！");
+			this.addActionError("文件所在HDFS输入不能为空！");
 			return Action.ERROR;
 		}
 		if (StringUtils.isBlank(inputfiledir)) {
-			this.addFieldError("filedir", "文件相对HDFS路径不能为空！");
+			this.addActionError("文件相对HDFS路径不能为空！");
 			return Action.ERROR;
 		}
 		if (interval < 1) {
-			this.addFieldError("interval", "时间间隔必须大于0！");
+			this.addActionError("时间间隔必须大于0！");
 			return Action.ERROR;
 		}
-		String filepath = AverageResponseTimeAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
+		String filepath = DataAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
 		option = optionService.getAverageRequestTimeOptionAsJSON(new File(filepath));
 	
 		// 如果输入的目录存在则删除
-		Path path = new Path(getOutputfiledir());
+		Path path = new Path(outputfiledir);
 		String fileRootPath = path.getParent().toString();
 		String directoryName = path.getName();
-		hdfsService.setBasePath(getBasedir());
+		hdfsService.setBasePath(basedir);
 		hdfsService.deleteDirectory(fileRootPath, directoryName);
 		
 		List<String> args = Lists.newArrayList();
@@ -132,21 +133,36 @@ public class AverageResponseTimeAction extends ActionSupport {
 		args.add("-i");
 		args.add(getInterval().toString());
 		boolean exeSucc = false;
-		if (!hdfsService.isDirEmpty(getInputfiledir())) {
+		if (!hdfsService.isDirEmpty(inputfiledir)) {
 		    // 执行hadoop任务
-			exeSucc = hdfsService.startMapReduce(getHadoopcmd(), getTaskdir(), getBasedir() + getInputfiledir(), getBasedir() + getOutputfiledir(), args);
+			exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir, basedir + outputfiledir, args);
 		}
 		
 		if (!exeSucc) {
-			return Action.ERROR;
+			option = null;
+			return Action.SUCCESS;
+		} else {
+			// 保存表单数据
+			JSONObject json = new JSONObject();
+			json.accumulate("requestType", requestType);
+			json.accumulate("success", success);
+			json.accumulate("basedir", basedir);
+			json.accumulate("hadoopcmd", hadoopcmd);
+			json.accumulate("taskdir", taskdir);
+			json.accumulate("namelist", namelist);
+			json.accumulate("inputfiledir", inputfiledir);
+			json.accumulate("outputfiledir", outputfiledir);
+			json.accumulate("interval", interval);
+
+			String file = AverageResponseTimeAction.class.getClassLoader().getResource("data/average_request_time.json").getPath();
+			FileUtil.saveFile(new File(file), json.toString(), false);
 		}
 
-		List<String> linesContent = hdfsService.getLineContents(new Path(getOutputfiledir() + "/part-00000"));
+		List<String> linesContent = hdfsService.getLineContents(new Path(outputfiledir + "/part-00000"));
 
-		Integer divisor = parserFileService.getDivisor(linesContent, getRequestType(), getSuccess());
+		Integer divisor = parserFileService.getDivisor(linesContent, requestType, success);
 		
-		System.out.println(divisor);
-		LineOptionBean bean = parserFileService.getLineOptionBean(linesContent, getRequestType(), getSuccess(), getInterval(), divisor);
+		LineOptionBean bean = parserFileService.getLineOptionBean(linesContent, requestType, success, interval, divisor);
 		
 		JSONObject jsonObject = (JSONObject)option;
 		
@@ -189,7 +205,6 @@ public class AverageResponseTimeAction extends ActionSupport {
 		
 		option = jsonObject;
 		
-		System.out.println(option.toString());
 		return Action.SUCCESS;
 	}
 }

@@ -31,7 +31,7 @@ public class ParserFileService {
 		title.setSubtext("RT");
 		bean.setTitle(title);
 
-		List<String> legend = Lists.newArrayList("平均响应时间", "平均吞吐量(byte/" + Math.pow(10, divisor) + " s)");
+		List<String> legend = Lists.newArrayList("平均响应时间（ms）", "平均吞吐量(byte/" + 1 / Math.pow(10, divisor) + " s)");
 		bean.setLegend(legend);
 
 		for (int i = 0; i < legend.size(); i++) {
@@ -129,7 +129,9 @@ public class ParserFileService {
 				count ++;
 			}
 		}
-		
+		if (0 == count) {
+			return 0;
+		}
 		Integer divisor = null;
 		
 		long ac = averageResponseTimeCount / count;

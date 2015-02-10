@@ -1,4 +1,4 @@
-package option;
+package web;
 
 import com.opensymphony.xwork2.ActionSupport;
 
