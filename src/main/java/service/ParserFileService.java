@@ -31,7 +31,7 @@ public class ParserFileService {
 		title.setSubtext("RT");
 		bean.setTitle(title);
 
-		List<String> legend = Lists.newArrayList("平均响应时间（ms）", "平均吞吐量(byte/" + 1 / Math.pow(10, divisor) + " s)");
+		List<String> legend = Lists.newArrayList("平均响应时间（ms）", "平均吞吐量（byte/" + 1 / Math.pow(10, divisor) + " s）");
 		bean.setLegend(legend);
 
 		for (int i = 0; i < legend.size(); i++) {
@@ -99,7 +99,7 @@ public class ParserFileService {
 	}
 
 	/**
-	 * 返回值是atc 和 ac的差,也就是数量级的差
+	 * 返回值是atc(平均吞吐量的数量级) 和 ac(平均相应时间的数量级)的差,也就是数量级的差
 	 * @param linesContent
 	 * @param label
 	 * @param success

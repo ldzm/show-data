@@ -14,7 +14,6 @@
 		if (document.getElementsByTagName) {
 			var table = document.getElementById(id);
 			var rows = table.getElementsByTagName("tr");
-
 			for (i = 0; i < rows.length; i++) {
 				if (i % 2 == 0) {
 					rows[i].className = "evenrowcolor";
@@ -25,32 +24,31 @@
 		}
 	}
 
-	var getAnalysisResult = function() {
-		$.post('analysisAction', $("#analysisSummery").serializeArray(),
-				function(data) {
-					alert(data["analysisResultBeans"][0].endTime);
-					alert(data["analysisResultBeans"].length);
-
-				});
-	}
 
 	var initFormData = function() {
-		
-		$.post('dataAction', {actionName:"Analysis"},function(data) {
-			var data = data["data"];
-			document.getElementById("basedir").value=data.basedir;
-			document.getElementById("hadoopcmd").value=data.hadoopcmd;
-			document.getElementById("taskdir").value=data.taskdir;
-			document.getElementById("namelist").value=data.namelist;
-			document.getElementById("inputfiledir").value=data.inputfiledir;
-			document.getElementById("outputfiledir").value=data.outputfiledir;
-		});
+
+		$
+				.post(
+						'dataAction',
+						{
+							actionName : "Analysis"
+						},
+
+						function(data) {
+							var data = data["data"];
+							document.getElementById("basedir").value = data.basedir;
+							document.getElementById("hadoopcmd").value = data.hadoopcmd;
+							document.getElementById("taskdir").value = data.taskdir;
+							document.getElementById("namelist").value = data.namelist;
+							document.getElementById("inputfiledir").value = data.inputfiledir;
+							document.getElementById("outputfiledir").value = data.outputfiledir;
+						});
 	}
-	
+
 	window.onload = function() {
 		altRows('alternatecolor');
 
-	    //初始化表单数据
+		//初始化表单数据
 		initFormData();
 	}
 </script>
@@ -87,21 +85,27 @@ table.altrowstable td {
 .evenrowcolor {
 	background-color: #c3dde0;
 }
+
 label[for="inputfiledir"] {
 	color: black;
 }
+
 label[for="basedir"] {
 	color: black;
 }
+
 label[for="taskdir"] {
 	color: black;
 }
+
 label[for="outputfiledir"] {
 	color: black;
 }
+
 label[for="hadoopcmd"] {
 	color: black;
 }
+
 label[for="namelist"] {
 	color: black;
 }
@@ -118,8 +122,8 @@ label[for="namelist"] {
 				</div>
 				<div id="navbar" class="navbar-collapse collapse">
 					<ul class="nav navbar-nav">
-						<li><a href="home">请求分析页面</a></li>
-						<li class="active"><a href="analysis">请求其他分析项页面</a></li>
+						<li><a href="home">响应时间/吞吐量分析</a></li>
+						<li class="active"><a href="analysis">综合分析</a></li>
 					</ul>
 				</div>
 				<!--/.nav-collapse -->
@@ -130,15 +134,23 @@ label[for="namelist"] {
 		<div class="jumbotron">
 			<s:form id="analysisSummery" action="analysisAction" method="post">
 				<s:textfield id="basedir" label="文件所在HDFS" name="basedir" />
-				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd" size="30" />
-				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir" size="30" />
-				<s:textarea id="namelist" label="文件头" name="namelist" cols="30" rows="3" />
-				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径" name="inputfiledir" size="30" />
-				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径" name="outputfiledir" size="30" />
-				<s:submit value="刷新" align="left" />
+				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd"
+					size="60" />
+				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir"
+					size="60" />
+				<s:textarea id="namelist" label="文件头" name="namelist" cols="60"
+					rows="2" />
+				<s:textfield id="inputfiledir" label="输入文件相对HDFS路径"
+					name="inputfiledir" size="60" />
+				<s:textfield id="outputfiledir" label="输出文件相对HDFS路径"
+					name="outputfiledir" size="60" />
+				<s:checkbox id="exetask" name="exetask" fieldValue="true" label="执行hadoop任务"/>
 				<tr>
-					<td><input type="button" value="初始化数据 " onClick="initFormData();" />
-					</td>
+					<td><s:submit value="提交" class="btn btn-default" align="left"
+							theme="simple" /></td>
+
+					<td><input type="button" class="btn btn-default"
+						value="重置化表单数据" onClick="initFormData();" /></td>
 				</tr>
 			</s:form>
 			<table class="altrowstable" id="alternatecolor">

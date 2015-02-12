@@ -6,11 +6,10 @@ import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 
-import service.HDFSService;
 import service.AverageResponseTimeService;
+import service.HDFSService;
 import service.ParserFileService;
 import util.FileUtil;
 import bean.LineOptionBean;
@@ -31,6 +30,7 @@ public class AverageResponseTimeAction extends ActionSupport {
 	private String inputfiledir;
 	private String outputfiledir;
 	private Integer interval;
+	private Boolean exetask;
 	private JSON option;
 	private AverageResponseTimeService optionService;
 	private ParserFileService parserFileService;	
@@ -95,6 +95,12 @@ public class AverageResponseTimeAction extends ActionSupport {
 	public void setOutputfiledir(String outputfiledir) {
 		this.outputfiledir = outputfiledir;
 	}
+	public Boolean getExetask() {
+		return exetask;
+	}
+	public void setExetask(Boolean exetask) {
+		this.exetask = exetask;
+	}
 	public JSON getOption() {
 		return option;
 	}
@@ -105,61 +111,48 @@ public class AverageResponseTimeAction extends ActionSupport {
 	@Override
 	public String execute() {
 
-		if (StringUtils.isBlank(basedir)) {
-			this.addActionError("文件所在HDFS输入不能为空！");
-			return Action.ERROR;
-		}
-		if (StringUtils.isBlank(inputfiledir)) {
-			this.addActionError("文件相对HDFS路径不能为空！");
-			return Action.ERROR;
-		}
-		if (interval < 1) {
-			this.addActionError("时间间隔必须大于0！");
-			return Action.ERROR;
-		}
-		String filepath = DataAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
+		String filepath = AverageResponseTimeAction.class.getClassLoader().getResource("option/average_request_time.json").getPath();
 		option = optionService.getAverageRequestTimeOptionAsJSON(new File(filepath));
 	
-		// 如果输入的目录存在则删除
-		Path path = new Path(outputfiledir);
-		String fileRootPath = path.getParent().toString();
-		String directoryName = path.getName();
 		hdfsService.setBasePath(basedir);
-		hdfsService.deleteDirectory(fileRootPath, directoryName);
+
+		if (exetask) {
+			// 如果输入的目录存在则删除
+			Path path = new Path(outputfiledir);
+			String fileRootPath = path.getParent().toString();
+			String directoryName = path.getName();
+			hdfsService.deleteDirectory(fileRootPath, directoryName);
+			
+			List<String> args = Lists.newArrayList();
+			args.add("-l");
+			args.add(getNamelist());
+			args.add("-i");
+			args.add(getInterval().toString());
+			boolean exeSucc = false;
+			if (!hdfsService.isDirEmpty(inputfiledir)) {
+			    // 执行hadoop任务
+				exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir, basedir + outputfiledir, args);
+			}
+			
+			if (!exeSucc) {
+				option = null;
+				return Action.SUCCESS;
+			} else {
+				saveAverageRequestFormData();
+			}
+		} 
+
+		List<String> linesContent = hdfsService.getLineContents(outputfiledir);
 		
-		List<String> args = Lists.newArrayList();
-		args.add("-l");
-		args.add(getNamelist());
-		args.add("-i");
-		args.add(getInterval().toString());
-		boolean exeSucc = false;
-		if (!hdfsService.isDirEmpty(inputfiledir)) {
-		    // 执行hadoop任务
-			exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir, basedir + outputfiledir, args);
-		}
-		
-		if (!exeSucc) {
+		if (null != linesContent) {
+			saveAverageRequestFormData();
+		} else {
 			option = null;
 			return Action.SUCCESS;
-		} else {
-			// 保存表单数据
-			JSONObject json = new JSONObject();
-			json.accumulate("requestType", requestType);
-			json.accumulate("success", success);
-			json.accumulate("basedir", basedir);
-			json.accumulate("hadoopcmd", hadoopcmd);
-			json.accumulate("taskdir", taskdir);
-			json.accumulate("namelist", namelist);
-			json.accumulate("inputfiledir", inputfiledir);
-			json.accumulate("outputfiledir", outputfiledir);
-			json.accumulate("interval", interval);
-
-			String file = AverageResponseTimeAction.class.getClassLoader().getResource("data/average_request_time.json").getPath();
-			FileUtil.saveFile(new File(file), json.toString(), false);
 		}
-
-		List<String> linesContent = hdfsService.getLineContents(new Path(outputfiledir + "/part-00000"));
-
+//		List<String> linesContent = Lists.newArrayList();//hdfsService.getLineContents(outputfiledir));
+//		linesContent.add("142347258,HTTP Request\t26014,34000.918,0,-0.000,336816,33.682,0,0.000,745,-1");
+//		linesContent.add("142347258,HTTP Request\t26014,34000.918,0,-0.000,336816,33.682,0,0.000,745,-1");
 		Integer divisor = parserFileService.getDivisor(linesContent, requestType, success);
 		
 		LineOptionBean bean = parserFileService.getLineOptionBean(linesContent, requestType, success, interval, divisor);
@@ -206,5 +199,22 @@ public class AverageResponseTimeAction extends ActionSupport {
 		option = jsonObject;
 		
 		return Action.SUCCESS;
+	}
+	
+	private void saveAverageRequestFormData() {
+		// 保存表单数据
+		JSONObject json = new JSONObject();
+		json.accumulate("requestType", requestType);
+		json.accumulate("success", success);
+		json.accumulate("basedir", basedir);
+		json.accumulate("hadoopcmd", hadoopcmd);
+		json.accumulate("taskdir", taskdir);
+		json.accumulate("namelist", namelist);
+		json.accumulate("inputfiledir", inputfiledir);
+		json.accumulate("outputfiledir", outputfiledir);
+		json.accumulate("interval", interval);
+
+		String file = AverageResponseTimeAction.class.getClassLoader().getResource("data/average_request_time.json").getPath();
+		FileUtil.saveFile(new File(file), json.toString(), false);
 	}
 }

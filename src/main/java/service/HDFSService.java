@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -20,6 +21,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Progressable;
+
+import com.google.common.collect.Lists;
 
 public class HDFSService {
 
@@ -239,6 +242,26 @@ public class HDFSService {
 		return lineContents;
 	}
 
+	/**
+	 * 多文件读取
+	 * 
+	 * @param pathRegExp 只支持/ab/abc*
+	 * @return result
+	 */
+	public List<String> getLineContents(String pathRegExp) {
+		
+		List<String> result = Lists.newArrayList();
+		List<Path> paths = getPaths(pathRegExp);
+		for (int i = 0; i < paths.size(); i++) {
+			result.addAll(getLineContents(paths.get(i)));
+		}
+		
+		if (result.size() == 0) {
+			return null;
+		}
+		return result;
+	}
+	
 	public boolean isDirEmpty(String dir) {
 		Configuration config = new Configuration();
 		FileSystem fs = null;
@@ -247,6 +270,10 @@ public class HDFSService {
 			FileSystem.setDefaultUri(config, new URI(basePath));
 			fs = FileSystem.get(config);
 			stats = fs.listStatus(new Path(basePath, dir));
+			
+			for (int i = 0; i < stats.length; i++) {
+				System.out.println(stats[i].getPath().getName());
+			}
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -264,6 +291,46 @@ public class HDFSService {
 		}
 
 		return false;
+	}
+	
+	/**
+	 * 返回符合条件的文件的Path列表
+	 * @param pathRegExp 只支持/ab/abc*
+	 * @return
+	 */
+	public List<Path> getPaths(String pathRegExp) {
+		
+		List<Path> pathList = Lists.newArrayList();
+		
+		String prefix = StringUtils.substring(pathRegExp, 0, pathRegExp.indexOf("*") == -1 ? pathRegExp.length() : pathRegExp.indexOf("*"));
+		Path path = new Path(prefix);
+
+		Configuration config = new Configuration();
+		FileSystem fs = null;
+		FileStatus[] stats = null;
+		try {
+			FileSystem.setDefaultUri(config, new URI(basePath));
+			fs = FileSystem.get(config);
+			stats = fs.listStatus(new Path(basePath, path.getParent().toString()));
+			
+			for (int i = 0; i < stats.length; i++) {
+				if (stats[i].getPath().getName().startsWith(path.getName())) {
+					pathList.add(stats[i].getPath());
+				}
+			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fs.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return pathList;
 	}
 	
 	public boolean exist(String file) {
@@ -322,29 +389,10 @@ public class HDFSService {
 		return result;
 	}
 
-//	public static void main(String[] args) throws Exception {
-//		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
-//		hdfsService.deleteDirectory("/", "axt");
-//		hdfsService.createDirectory("/", "axt");
-//		if (hdfsService.exist("/axt")) {
-//			System.out.println("/axt exist");
-//		} else {
-//			System.out.println("/axt not exist");
-//		}
-//		hdfsService.deleteDirectory("/", "axt");
-//		if (hdfsService.exist("/axt")) {
-//			System.out.println("/axt exist");
-//		} else {
-//			System.out.println("/axt not exist");
-//		}
-//		hdfsService.createDirectory("/axt", "axts");
-//		if (hdfsService.exist("/art/output/jmeter-20150209170502.txt")) {
-//			System.out.println("/art/output/jmeter-20150209170502.txt exist");
-//		} else {
-//			System.out.println("/art/output/jmeter-20150209170502.txt not exist");
-//		}
-//		boolean empty = hdfsService.isDirEmpty("/art/output/jmeter-20150209170502.txt exist");
-//		System.out.println(empty);
-//		hdfsService.deleteDirectory("/", "axt");
-//	}
+	public static void main(String[] args) throws Exception {
+		HDFSService hdfsService = new HDFSService("hdfs://sky:9000");
+//		List<String> list = hdfsService.getLineContents(new Path("/test1/output/part-*"));
+		
+		hdfsService.getLineContents("/xxx/part*");
+	}
 }
