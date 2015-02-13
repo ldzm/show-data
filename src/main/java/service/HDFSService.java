@@ -313,9 +313,11 @@ public class HDFSService {
 			fs = FileSystem.get(config);
 			stats = fs.listStatus(new Path(basePath, path.getParent().toString()));
 			
-			for (int i = 0; i < stats.length; i++) {
-				if (stats[i].getPath().getName().startsWith(path.getName())) {
-					pathList.add(stats[i].getPath());
+			if (null != stats) {
+				for (int i = 0; i < stats.length; i++) {
+					if (stats[i].getPath().getName().startsWith(path.getName())) {
+						pathList.add(stats[i].getPath());
+					}
 				}
 			}
 		} catch (URISyntaxException e) {

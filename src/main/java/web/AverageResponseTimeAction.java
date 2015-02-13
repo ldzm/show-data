@@ -131,7 +131,7 @@ public class AverageResponseTimeAction extends ActionSupport {
 			boolean exeSucc = false;
 			if (!hdfsService.isDirEmpty(inputfiledir)) {
 			    // 执行hadoop任务
-				exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir, basedir + outputfiledir, args);
+				exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir, basedir + path.getParent().toString(), args);
 			}
 			
 			if (!exeSucc) {

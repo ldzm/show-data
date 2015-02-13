@@ -122,7 +122,7 @@ public class AnalysisAction extends ActionSupport {
 			if (!hdfsService.isDirEmpty(getInputfiledir())) {
 				// 执行hadoop任务
 				exeSucc = hdfsService.startMapReduce(hadoopcmd, taskdir, basedir + inputfiledir, basedir
-						+ outputfiledir, args);
+						+ path.getParent().toString(), args);
 			}
 
 			if (!exeSucc) {

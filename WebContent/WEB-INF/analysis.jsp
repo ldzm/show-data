@@ -133,7 +133,7 @@ label[for="namelist"] {
 		<!-- Main component for a primary marketing message or call to action -->
 		<div class="jumbotron">
 			<s:form id="analysisSummery" action="analysisAction" method="post">
-				<s:textfield id="basedir" label="文件所在HDFS" name="basedir" />
+				<s:textfield id="basedir" label="文件所在HDFS" name="basedir" size="60" />
 				<s:textfield id="hadoopcmd" label="hadoop命令的位置" name="hadoopcmd"
 					size="60" />
 				<s:textfield id="taskdir" label="hadoop任务所在位置" name="taskdir"
